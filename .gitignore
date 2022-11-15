@@ -1,0 +1,8 @@
+*.pdf
+.ipynb_checkpoints
+__pycache__
+*.db
+*.log
+*.h5
+result*
+.DS_Store
