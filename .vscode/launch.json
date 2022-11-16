@@ -8,7 +8,7 @@
             "name": "Python: Construction Kamus",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/4. Construction/construction_kamus.py",
+            "program": "${workspaceFolder}/4. Construction/build_database_kamus.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/4. Construction",
             "justMyCode": true

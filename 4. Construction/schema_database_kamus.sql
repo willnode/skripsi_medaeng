@@ -1,68 +1,80 @@
--- SQLITE Schema
+-- SQLITE Schema: Database Kamus
 
---------- Entities below
+--------- Tabel entitas
 
--- A glossary index, separated by a new line
 CREATE TABLE "tb_kosakata" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "word" text NOT NULL,
-    "pronounciation" text, -- Pronunciation
+    "pronounciation" text,
     "homonym_index" int NOT NULL DEFAULT 1
 );
 
--- A contoh index, separated by a dot comma
 CREATE TABLE "tb_contoh" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-    "bahasa" text NOT NULL, -- IND / MAD
+    "bahasa" text NOT NULL,
     "rawtext" text NOT NULL,
-    "index" int NOT NULL -- Index of the contoh in the glossary
+    "index" int NOT NULL
 );
 
--- To group equal contoh (as synonym tekss) together
 CREATE TABLE "tb_teks" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-    "text" text NOT NULL, -- the teks
-    "context" text, -- konteks (ttg....)
-    "alternative" text, -- alternative (kalimat lain)
+    "text" text NOT NULL,
+    "context" text,
+    "alternative" text,
     "index" int NOT NULL DEFAULT 1
 );
 
--- Explanation for each "ref"
+--------- Tabel daftar keterangan
+
 CREATE TABLE "keterangan_kelas_kata" (
-    "key" text NOT NULL, -- the key
-    "deskripsi" text NOT NULL -- the value
+    "key" text NOT NULL,
+    "deskripsi" text NOT NULL
 );
 
--- Explanation for each "ref"
 CREATE TABLE "keterangan_kosakata" (
-    "key" text NOT NULL, -- the key
+    "key" text NOT NULL,
     "deskripsi" text NOT NULL
 );
 
 CREATE TABLE "keterangan_contoh" (
-    "key" text NOT NULL, -- the key
+    "key" text NOT NULL,
     "deskripsi" text NOT NULL
 );
 
 CREATE TABLE "keterangan_teks" (
-    "key" text NOT NULL, -- the key
-    "deskripsi" text NOT NULL, -- the value
-    "kategori" text NOT NULL -- the kategori
+    "key" text NOT NULL,
+    "deskripsi" text NOT NULL,
+    "kategori" text NOT NULL
 );
 
---------- Relations below
+--------- Relasi Antar Tabel
 
--- kosakata (all) <-- contoh (all)
 ALTER TABLE "tb_contoh"
     ADD COLUMN "kosakata_id" int NOT NULL
     REFERENCES tb_kosakata(id);
 
--- contoh (all) <-- teks (all)
 ALTER TABLE "tb_teks"
     ADD COLUMN "contoh_id" int NOT NULL
     REFERENCES tb_contoh(id);
 
---------- Static information
+ALTER TABLE "tb_kosakata"
+    ADD COLUMN "keterangan" text
+    REFERENCES keterangan_kosakata(key);
+
+ALTER TABLE "tb_contoh"
+    ADD COLUMN "keterangan" text
+    REFERENCES keterangan_contoh(key);
+
+ALTER TABLE "tb_teks"
+    ADD COLUMN "keterangan" text
+    REFERENCES keterangan_teks(key);
+
+ALTER TABLE "tb_teks"
+    ADD COLUMN "kelas_kata" text
+    REFERENCES keterangan_kelas_kata(key);
+
+
+--------- Data keterangan
 
 INSERT INTO "keterangan_kelas_kata" (
     "key",
@@ -202,35 +214,60 @@ INSERT INTO "keterangan_teks" (
     'serapan daerah'
 );
 
+--------- View untuk statistik data
 
-ALTER TABLE "tb_kosakata"
-    ADD COLUMN "keterangan" text
-    REFERENCES keterangan_kosakata(key);
-
-ALTER TABLE "tb_contoh"
-    ADD COLUMN "keterangan" text
-    REFERENCES keterangan_contoh(key);
-
-ALTER TABLE "tb_teks"
-    ADD COLUMN "keterangan" text
-    REFERENCES keterangan_teks(key);
-
-ALTER TABLE "tb_teks"
-    ADD COLUMN "kelas_kata" text
-    REFERENCES keterangan_kelas_kata(key);
-
---------- Views below
-
+-- Jumlah data teks per keterangan
 CREATE VIEW "teks_keterangan_count" AS
     SELECT
-        keterangan,
+        tb_teks.keterangan,
+        bahasa,
         COUNT(*) AS count
-    FROM teks
-    GROUP BY keterangan;
+    FROM tb_teks
+    JOIN tb_contoh ON
+    tb_contoh.id = tb_teks.contoh_id
+    GROUP BY tb_teks.keterangan, bahasa;
 
+-- Jumlah data teks per kelas kata
 CREATE VIEW "teks_kelas_kata_count" AS
     SELECT
         kelas_kata,
+        bahasa,
         COUNT(*) AS count
-    FROM teks
-    GROUP BY kelas_kata;
+    FROM tb_teks
+    JOIN tb_contoh ON
+    tb_contoh.id = tb_teks.contoh_id
+    GROUP BY kelas_kata, bahasa;
+
+-- Jumlah data contoh per keterangan
+CREATE VIEW "contoh_keterangan_count" AS
+    SELECT
+        keterangan,
+        bahasa,
+        COUNT(*) AS count
+    FROM tb_contoh
+    GROUP BY keterangan, bahasa;
+
+-- Statistik jumlah data
+CREATE VIEW "data_count" AS
+    SELECT
+    (SELECT count(*) from keterangan_kosakata) kk,
+    (SELECT count(*) from keterangan_contoh) kc,
+    (SELECT count(*) from keterangan_kelas_kata) kkk,
+    (SELECT count(*) from keterangan_teks) kt,
+    (SELECT count(*) from tb_kosakata) tbk,
+    (SELECT count(*) from tb_contoh) tbc,
+    (SELECT count(*) from tb_contoh
+        WHERE bahasa = 'MAD') tbcm,
+    (SELECT count(*) from tb_contoh
+        WHERE bahasa = 'IND') tbci,
+    (SELECT count(*) from tb_teks) tbt,
+    (SELECT count(*) from tb_teks
+        JOIN tb_contoh ON
+        tb_teks.contoh_id = tb_contoh.id
+        WHERE bahasa = 'MAD') tbtm,
+    (SELECT count(*) from tb_teks
+        JOIN tb_contoh ON
+        tb_teks.contoh_id = tb_contoh.id
+        WHERE bahasa = 'IND') tbti;
+
+

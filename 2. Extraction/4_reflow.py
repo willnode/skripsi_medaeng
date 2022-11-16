@@ -10,7 +10,7 @@ output_text = open('kamus_5_split.txt', 'w', encoding='utf8')
 
 # read and normalize unicode
 texts = '\n'.join(input_text.readlines())
-texts = unicodedata.normalize('NFD', texts)
+texts = unicodedata.normalize('NFKD', texts)
 
 # init variables
 glossaryMatrix = [[]]
@@ -26,14 +26,14 @@ for pos, ch in enumerate(texts):
     if ch in [')', ']', '}']:
         refGroup -= 1
 
-    # new page character, skip 
+    # new page character, skip
     if ch == "\x0c":
         continue
-    
+
     # assume new line == a space
     if ch == "\n":
         ch = ' '
-    
+
     # (madura = indonesia), switch mode
     # also it's impossible to have = inside brackets
     # so also normalize our refGroup back to 0
@@ -43,7 +43,7 @@ for pos, ch in enumerate(texts):
     # (indonesia ; madura), switch mode
     if ch == ";":
         indoMode = False
-    
+
     # append character to current glosary
     glossaryMatrix[len(glossaryMatrix) - 1].append(ch)
 
