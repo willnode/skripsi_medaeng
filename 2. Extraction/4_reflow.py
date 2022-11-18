@@ -1,79 +1,80 @@
-# Convert all to single line,
-# Then split by glossary
+###
+# Program untuk memisahkan data baris berdasarkan kosakata
+###
 
 import re
 import unicodedata
 
-# Open input & output
-input_text = open('kamus_4_pdf2text.txt', 'r', encoding='utf8')
-output_text = open('kamus_5_split.txt', 'w', encoding='utf8')
+# Buka file input dan output
+input_text = open('3_pdf2text_output.txt', 'r', encoding='utf8')
+output_text = open('5_reflow_output.txt', 'w', encoding='utf8')
 
-# read and normalize unicode
+# Baca file input dan normalisasikan unicode NFKD
 texts = '\n'.join(input_text.readlines())
 texts = unicodedata.normalize('NFKD', texts)
 
-# init variables
+# Inisialisasi Variabel
 glossaryMatrix = [[]]
 refGroup = 0
 refWord = 0
 indoMode = False
 
-# scan each characters
+# Pindah setiap karakter
 for pos, ch in enumerate(texts):
-    # don't scan dot char inside brackets
+    # Jangan pindai jika didalam kurung
     if ch in ['(', '[', '{']:
         refGroup += 1
     if ch in [')', ']', '}']:
         refGroup -= 1
 
-    # new page character, skip
+    # Jangan pindai penanda halaman baru
     if ch == "\x0c":
         continue
 
-    # assume new line == a space
+    # Asumsikan baris baru adalah spasi
     if ch == "\n":
         ch = ' '
 
-    # (madura = indonesia), switch mode
-    # also it's impossible to have = inside brackets
-    # so also normalize our refGroup back to 0
+    # Tanda sama dengan berarti selanjutnya bhs Indonesia
+    # Jarang ada tanda sama dengan didalam kurung,
+    # Jadi apabila ada tanda ini, set refGroup ke 0
     if ch == "=":
         indoMode = True
         refGroup = 0
-    # (indonesia ; madura), switch mode
+    # Tanda titik koma brarti selanjutnya bhs Madura
     if ch == ";":
         indoMode = False
 
-    # append character to current glosary
+    # Tambah karakter ke kosakata terakhir
     glossaryMatrix[len(glossaryMatrix) - 1].append(ch)
 
-    # a valid dot char means end of glosary
-    # valid means: not in brackets and in indo mode
+    # Tanda titik yang valid berarti kosakata selesai
+    # valid berarti: tidak didalam kurung dan dalam bhs Indonesia
     if ch == '.' and refGroup == 0 and indoMode:
-        # sometimes there's faulty if ; is not scanned properly
-        # so it's stuck in indo mode. another way to make sure
-        # the dot is valid is make sure the next dot is an alphabets
+        # Sering ada titik koma disalah artikan sebagai hal yang lain,
+        # Pastikan sehabis titik koma lanjutannya adalah alfabet.
         pos2 = pos + 1
         while pos2 < len(texts) and texts[pos2].isspace():
             pos2 += 1
         if pos2 < len(texts) and not texts[pos2].isalpha():
             continue
 
-        # set new glosary
+        # Tambah kosakata baru
         glossaryMatrix.append([])
         indoMode = False
 
 for x in glossaryMatrix:
     output = ''.join(x)
-    # delete book header (odd)
+    # Hapus header buku (ganjil)
     output = re.sub(r" *\d{0,2}(1|3|5|7|9) +Kamus Madura *", " ", output)
-    # delete book header (even)
+    # Hapus header buku (genap)
     output = re.sub(r" *Kamus Madura +\d{0,2}(2|4|6|8|0) *", " ", output)
-    # trim multi space
+    # Hapus spasi ganda
     output = re.sub(r" +", " ", output).strip()
     output_text.write(output)
     output_text.write("\n")
 
+# Selesai. Tutup file
 input_text.close()
 output_text.close()
 
