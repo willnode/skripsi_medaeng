@@ -121,7 +121,7 @@ def build_teks(lang, vocab_set, datamem_teks, datamem_token):
     # Ambil satu token dari tb_token
     for token in list_token:
       # Subproses: Pisah token sesuai dengan daftar kosakata wordpiece
-      splitted_token = split_token_to_wp(token['token'], vocab_set)
+      splitted_token = split_token_to_wp(token['text'], vocab_set)
       # Simpan ke daftar mapping token dasar ke token wordpiece
       list_token_converted[token['id']] = splitted_token
     for teks_token in list_teks_token:
