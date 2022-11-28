@@ -27,22 +27,22 @@ CREATE TABLE "tb_teks" (
 --------- Tabel daftar keterangan
 
 CREATE TABLE "keterangan_kelas_kata" (
-    "key" text NOT NULL,
+    "key" varchar(255) NOT NULL PRIMARY KEY,
     "deskripsi" text NOT NULL
 );
 
 CREATE TABLE "keterangan_kosakata" (
-    "key" text NOT NULL,
+    "key" varchar(255) NOT NULL PRIMARY KEY,
     "deskripsi" text NOT NULL
 );
 
 CREATE TABLE "keterangan_contoh" (
-    "key" text NOT NULL,
+    "key" varchar(255) NOT NULL PRIMARY KEY,
     "deskripsi" text NOT NULL
 );
 
 CREATE TABLE "keterangan_teks" (
-    "key" text NOT NULL,
+    "key" varchar(255) NOT NULL PRIMARY KEY,
     "deskripsi" text NOT NULL,
     "kategori" text NOT NULL
 );
@@ -58,19 +58,19 @@ ALTER TABLE "tb_teks"
     REFERENCES tb_contoh(id);
 
 ALTER TABLE "tb_kosakata"
-    ADD COLUMN "keterangan" text
+    ADD COLUMN "keterangan" varchar(255)
     REFERENCES keterangan_kosakata(key);
 
 ALTER TABLE "tb_contoh"
-    ADD COLUMN "keterangan" text
+    ADD COLUMN "keterangan" varchar(255)
     REFERENCES keterangan_contoh(key);
 
 ALTER TABLE "tb_teks"
-    ADD COLUMN "keterangan" text
+    ADD COLUMN "keterangan" varchar(255)
     REFERENCES keterangan_teks(key);
 
 ALTER TABLE "tb_teks"
-    ADD COLUMN "kelas_kata" text
+    ADD COLUMN "kelas_kata" varchar(255)
     REFERENCES keterangan_kelas_kata(key);
 
 

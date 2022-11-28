@@ -1,0 +1,1 @@
+sqlite3mysql -f db_kamus.db -d kamus -u root
