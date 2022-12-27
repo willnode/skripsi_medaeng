@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container text-center py-5" style="max-width: 540px;">
+
+    <h1 class="display-4 mb-3">
+        Terjemahkan!
+        <br>
+        <span class="h3">
+            Bhâsa Medhurâ &nbsp;➡️&nbsp; Bahasa Indonesia
+        </span>
+    </h1>
+
+    <form name="translator">
+        <div class="input-group mb-3">
+            <button class="btn btn-outline-secondary" id="shuffle" title="Acak" type="button">🔀</button>
+            <input type="text" class="form-control" name="madura" placeholder="Masukkan kata atau kalimat"
+                aria-label="Masukkan kata atau kalimat" aria-describedby="submit" autocomplete="off">
+            <button class="btn btn-outline-secondary" type="submit" id="submit" title="Terjemahkan">➡️</button>
+        </div>
+    </form>
+    <div id="hasil" style="min-height: 300px ;">
+
+    </div>
+    <p class="py-5 text-secondary">
+        Demonstrasi penelitian. <br>
+        Mesin penerjemah berbasis Transformer 2022,<br>
+        Universitas Trunojoyo Madura.<br>
+        Tidak digunakan untuk umum.
+    </p>
+    <script>
+        const randomWords = [
+            "Sèngko' rangrang molè ka Madhurâ",
+            "Arèya pèssè ringgit",
+            "È lonalon ratosân orèng paḍâ akompol nèngghu kerrabhân sapè"
+        ];
+
+        // init with random words
+        document.getElementById('shuffle').addEventListener('click', function () {
+            document.translator.madura.value = randomWords[Math.floor(Math.random() * randomWords.length)]
+        })
+
+        document.translator.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var madura = document.translator.madura.value;
+            var url = '/api';
+            document.getElementById('hasil').innerHTML = 'Loading...';
+            document.getElementById('submit').setAttribute('disabled', 'disabled');
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: madura
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.log('Error:', data.error);
+                    }
+                    document.getElementById('hasil').innerHTML = `
+                    <small>Hasil penerjemahan</small>
+                    <div class="alert alert-primary">
+                    ${data.result}
+                    </div>
+                    <small>Tokenisasi Input</small>
+                    <div class="alert alert-secondary font-monospace">
+                    ${JSON.stringify(data.encoded, null, 2)
+                            .replace(/"\[UNK\]"/g, '<span class="text-danger">"[UNK]"</span>')
+                            .replace(/"\[(BOS|EOS|PAD)\]"/g, '<span class="text-secondary">"[$1]"</span>')
+                        }
+                    </div>
+                    <small>Tokenisasi Output</small>
+                    <div class="alert alert-secondary font-monospace">
+                    ${JSON.stringify(data.decoded, null, 2)
+                            .replace(/"\[(BOS|EOS|PAD|UNK)\]"/g, '<span class="text-secondary">"[$1]"</span>')
+                        }
+                    </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                }).finally(() => {
+                    document.getElementById('submit').removeAttribute('disabled');
+                })
+        });
+    </script>
+</div>
+{% endblock content %}

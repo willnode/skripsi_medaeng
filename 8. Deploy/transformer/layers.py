@@ -238,9 +238,9 @@ def make_model(
 
   return model
 
-def translate(src_teks: list[str], model_data: tuple[EncoderDecoder, dict, list], debug=False) -> list[str]:
+def translate(src_teks: list[str], model_data: tuple[EncoderDecoder, dict, list]) -> list[str]:
     model, mad_tokens, ind_tokens = model_data
-    src = tokenize(src_teks, mad_tokens, wordpiece=True, debug=debug)
+    src, t_src = tokenize(src_teks, mad_tokens, wordpiece=True)
     src_mask = (src != 2).unsqueeze(-2)
     memory = model.encode(src, src_mask)
     ys = torch.zeros(1, 1).type_as(src)
@@ -256,4 +256,5 @@ def translate(src_teks: list[str], model_data: tuple[EncoderDecoder, dict, list]
             )
             if next_word == 1:
                 break
-    return detokenize(ys, ind_tokens, debug=debug)
+    dst, t_dst =detokenize(ys, ind_tokens)
+    return dst, t_src, t_dst

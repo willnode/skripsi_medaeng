@@ -80,7 +80,7 @@ def split_tokens(text: str):
       i+=1
     return src_tokenized
   
-def tokenize(text: list, vocab: map, wordpiece=False, debug=False):
+def tokenize(text: list, vocab: map, wordpiece=False):
   result = []
   for t in text:
     src_tokenized = split_tokens(t)
@@ -90,27 +90,25 @@ def tokenize(text: list, vocab: map, wordpiece=False, debug=False):
       for i in range(len(src_tokenized)):
         words.extend(_nest_wp_tokenize(src_tokenized[i], vocab))
       src_tokenized = words
-    debug and print('src_tokenized', [x if isinstance(x, str) else x.decode('UTF-8') for x in src_tokenized])
     src_indexed = [vocab.get(x, UNK_TOKEN) for x in src_tokenized]
     result.append([BOS_TOKEN, *src_indexed, EOS_TOKEN])
-    debug and print('src_indexed', result[-1])
 
   if len(result) > 1:
     max_len = max([len(x) for x in result])
     for i in range(len(result)):
       result[i] += [PAD_TOKEN] * (max_len - len(result[i]))
-  return torch.tensor(result)
+  return torch.tensor(result), ['[BOS]', *[x if isinstance(x, str) else x.decode('UTF-8') for x in src_tokenized], '[EOS]']
 
-def detokenize(text: torch.Tensor, vocab: list, debug=False):
+def detokenize(text: torch.Tensor, vocab: list):
   result = []
   for t in text.cpu():
-    debug and print('dst_indexed', t)
-    dst_tokenized = [vocab[x] for x in t if x > 3]
-    dst_tokenized = [x.decode('utf8') for x in dst_tokenized]
-    debug and print('dst_tokenized', dst_tokenized)
+    dst_tokenized = [vocab[x] for x in t]
+    dst_tokenized = [x if isinstance(x, str) else x.decode('utf8') for x in dst_tokenized]
     teks = []
     lastIsPrefix = False
     for token in dst_tokenized:
+      if token in ['[BOS]', '[EOS]', '[PAD]', '[UNK]']:
+        continue
       if token.startswith('_'):
         teks.append(token[1:])
       else:
@@ -119,7 +117,10 @@ def detokenize(text: torch.Tensor, vocab: list, debug=False):
         teks.append(token)
         lastIsPrefix = token in PREFIX_PUNCTUATIONS
     result.append(''.join(teks).strip())
-  return result
+  return result, dst_tokenized
+
+
+
 
 
 
